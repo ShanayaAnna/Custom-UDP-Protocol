@@ -8,7 +8,11 @@ void send_packet(int sock, struct sockaddr_in *server_addr, unsigned char client
     DataPacket packet;
     create_data_packet(&packet, client_id, segment_no, message);
 
-    sendto(sock, &packet, sizeof(DataPacket), 0, 
+    // Serialize the packet into a buffer before sending
+    unsigned char buffer[sizeof(DataPacket)];
+    serialize_data_packet(&packet, buffer);
+
+    sendto(sock, buffer, sizeof(DataPacket), 0, 
            (struct sockaddr*)server_addr, sizeof(*server_addr));
 
     printf("Sent Packet %d: \"%s\"\n", segment_no, message);

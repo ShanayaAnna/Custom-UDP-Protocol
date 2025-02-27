@@ -14,7 +14,7 @@ void process_packet(DataPacket *packet) {
         return;
     }
     printf("Received Packet %d from Client %d: \"%s\"\n", packet->segment_no, packet->client_id, packet->payload);
-    print_packet(packet);
+    //print_packet(packet);
 }
 
 int main() {

@@ -54,7 +54,9 @@ typedef struct {
 } RejectPacket;
 
 // Function prototypes
-void create_data_packet(DataPacket *packet, unsigned char client_id, unsigned char segment_no, const char *message);
+void create_data_packet(DataPacket *packet, uint8_t client_id, unsigned char segment_no, const char *message);
 void print_packet(const DataPacket *packet);
+void serialize_data_packet(DataPacket *packet, uint8_t *buffer);
+void deserialize_data_packet(uint8_t *buffer, DataPacket *packet);
 
 #endif // PACKET_H
