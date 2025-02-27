@@ -1,17 +1,23 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
+#include "packet.h"
 #include <unistd.h>
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12345
-#define BUFFER_SIZE 1024
+
+void send_packet(int sock, struct sockaddr_in *server_addr, unsigned char client_id, unsigned char segment_no, const char *message) {
+    DataPacket packet;
+    create_data_packet(&packet, client_id, segment_no, message);
+
+    sendto(sock, &packet, sizeof(DataPacket), 0, 
+           (struct sockaddr*)server_addr, sizeof(*server_addr));
+
+    printf("Sent Packet %d: \"%s\"\n", segment_no, message);
+    print_packet(&packet);
+}
 
 int main() {
     int client_socket;
     struct sockaddr_in server_addr;
-    char buffer[BUFFER_SIZE];
 
     // Create UDP socket
     client_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -25,20 +31,12 @@ int main() {
     server_addr.sin_port = htons(SERVER_PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    // Send test message
-    char *message = "TEST MESSAGE";
-    sendto(client_socket, message, strlen(message), 0, 
-           (struct sockaddr*)&server_addr, sizeof(server_addr));
-
-    // Receive response
-    socklen_t addr_len = sizeof(server_addr);
-    int recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, 
-                            (struct sockaddr*)&server_addr, &addr_len);
-    if (recv_len < 0) {
-        perror("Receive failed");
-    } else {
-        buffer[recv_len] = '\0'; // Null-terminate received string
-        printf("Server Response: %s\n", buffer);
+    // Send 5 properly formatted packets
+    for (int i = 0; i < 5; i++) {
+        char message[30];
+        snprintf(message, sizeof(message), "Message %d", i);
+        send_packet(client_socket, &server_addr, 1, i, message);
+        sleep(1);
     }
 
     close(client_socket);
