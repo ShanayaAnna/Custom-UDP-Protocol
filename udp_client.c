@@ -33,7 +33,7 @@ int send_packet_and_wait_for_ack(int client_socket, struct sockaddr_in *server_a
         }
     
         printf("Sent Packet %d: \"%s\"\n", segment_no, message);
-        print_packet(&data_packet);
+        print_data_packet(&data_packet);
     
         // Receive ACK
         unsigned char ack_buffer[sizeof(AckPacket)];

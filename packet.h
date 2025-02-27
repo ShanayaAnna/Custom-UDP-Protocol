@@ -54,8 +54,10 @@ typedef struct {
 } RejectPacket;
 
 // Function prototypes
-void create_data_packet(DataPacket *packet, uint8_t client_id, unsigned char segment_no, const char *message);
+void create_data_packet(DataPacket *data_packet, uint8_t client_id, unsigned char segment_no, const char *message);
 void create_ack_packet(AckPacket *ack_packet, uint8_t client_id, unsigned char segment_no);
-void print_packet(const DataPacket *packet);
+void create_reject_packet(RejectPacket *reject_packet, uint8_t client_id, unsigned short reject_code, unsigned char segment_no);
+void print_data_packet(const DataPacket *data_packet);
+void print_reject_packet(const RejectPacket *reject_packet);
 
 #endif // PACKET_H
