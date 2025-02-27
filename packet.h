@@ -55,8 +55,7 @@ typedef struct {
 
 // Function prototypes
 void create_data_packet(DataPacket *packet, uint8_t client_id, unsigned char segment_no, const char *message);
+void create_ack_packet(AckPacket *ack_packet, uint8_t client_id, unsigned char segment_no);
 void print_packet(const DataPacket *packet);
-void serialize_data_packet(DataPacket *packet, uint8_t *buffer);
-void deserialize_data_packet(uint8_t *buffer, DataPacket *packet);
 
 #endif // PACKET_H

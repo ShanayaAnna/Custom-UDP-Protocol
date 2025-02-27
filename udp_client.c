@@ -11,63 +11,48 @@
 #define MAX_RETRIES 3
 #define TIMEOUT 3  // in seconds
 
-// Function to wait for ACK from the server
-int wait_for_ack(int sock, struct sockaddr_in *server_addr, socklen_t *server_addr_len) {
-    DataPacket ack_packet;
-    struct timeval tv;
-    tv.tv_sec = TIMEOUT;  // Set timeout duration
-    tv.tv_usec = 0;
-
-    // Set socket timeout
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-
-    ssize_t received = recvfrom(sock, &ack_packet, sizeof(DataPacket), 0,
-                                 (struct sockaddr*)server_addr, server_addr_len);
-    if (received < 0) {
-        return 0;  // Timeout or error
-    }
-
-    // Check if it's an ACK
-    if (ack_packet.packet_type == PACKET_TYPE_ACK) {
-        printf("ACK received for packet %d\n", ack_packet.segment_no);
-        return 1;  // ACK received
-    }
-
-    return 0;  // Not an ACK, handle other cases (REJECT, etc.)
-}
-
 // Function to send a packet and wait for acknowledgment
-int send_packet_and_wait_for_ack(int sock, struct sockaddr_in *server_addr, socklen_t *server_addr_len, unsigned char client_id, unsigned char segment_no, const char *message) {
+int send_packet_and_wait_for_ack(int client_socket, struct sockaddr_in *server_addr, socklen_t *server_addr_len, unsigned char client_id, unsigned char segment_no, const char *message) {
     int retries = 0;
-    DataPacket packet;
-    create_data_packet(&packet, client_id, segment_no, message);
+    DataPacket data_packet;
+    create_data_packet(&data_packet, client_id, segment_no, message);
 
-    // Serialize the packet into a buffer before sending
-    unsigned char buffer[sizeof(DataPacket)];
-    serialize_data_packet(&packet, buffer);
 
     while (retries < MAX_RETRIES) {
+        // Serialize DATA packet
+        unsigned char data_buffer[sizeof(DataPacket)];
+        memcpy(data_buffer, &data_packet, sizeof(DataPacket));
+        printf("DATA Serialized Successfully\n");
+    
         // Send the packet
-        ssize_t sent = sendto(sock, buffer, sizeof(DataPacket), 0, 
+        ssize_t sent = sendto(client_socket, data_buffer, sizeof(DataPacket), 0, 
                               (struct sockaddr*)server_addr, sizeof(*server_addr));
         if (sent < 0) {
             perror("Send failed");
             exit(EXIT_FAILURE);
         }
-
+    
         printf("Sent Packet %d: \"%s\"\n", segment_no, message);
-        print_packet(&packet);
-
-        // Wait for ACK
-        if (wait_for_ack(sock, server_addr, server_addr_len)) {
-            return 1;  // ACK received, exit loop
+        print_packet(&data_packet);
+    
+        // Receive ACK
+        unsigned char ack_buffer[sizeof(AckPacket)];
+        ssize_t received = recvfrom(client_socket, ack_buffer, sizeof(AckPacket), 0,
+                                     (struct sockaddr*)server_addr, server_addr_len);
+        if (received > 0) {
+            AckPacket ack_packet;
+            memcpy(&ack_packet, ack_buffer, sizeof(AckPacket));
+            if (ack_packet.packet_type == PACKET_TYPE_ACK) {
+                printf("ACK received for packet %d\n\n", ack_packet.received_segment_no);
+                return 1;
+            }
         }
-
+    
         printf("ACK not received, retrying...\n");
         retries++;
     }
-
-    printf("Server does not respond\n");
+    
+    printf("Server does not respond\n\n");
     return 0;  // Max retries reached without receiving ACK
 }
 
