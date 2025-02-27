@@ -37,7 +37,7 @@ int wait_for_ack(int sock, struct sockaddr_in *server_addr, socklen_t *server_ad
 }
 
 // Function to send a packet and wait for acknowledgment
-int send_packet_and_wait_for_ack(int sock, struct sockaddr_in *server_addr, unsigned char client_id, unsigned char segment_no, const char *message) {
+int send_packet_and_wait_for_ack(int sock, struct sockaddr_in *server_addr, socklen_t *server_addr_len, unsigned char client_id, unsigned char segment_no, const char *message) {
     int retries = 0;
     DataPacket packet;
     create_data_packet(&packet, client_id, segment_no, message);
@@ -59,7 +59,7 @@ int send_packet_and_wait_for_ack(int sock, struct sockaddr_in *server_addr, unsi
         print_packet(&packet);
 
         // Wait for ACK
-        if (wait_for_ack(sock, server_addr, sizeof(*server_addr))) {
+        if (wait_for_ack(sock, server_addr, server_addr_len)) {
             return 1;  // ACK received, exit loop
         }
 
@@ -92,7 +92,7 @@ int main() {
     for (int i = 0; i < 5; i++) {
         char message[30];
         snprintf(message, sizeof(message), "Message %d", i);
-        if (!send_packet_and_wait_for_ack(client_socket, &server_addr, 1, i, message)) {
+        if (!send_packet_and_wait_for_ack(client_socket, &server_addr, &server_addr_len, 1, i, message)) {
             close(client_socket);
             return 0;
         }
