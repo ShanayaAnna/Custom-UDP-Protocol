@@ -9,7 +9,7 @@
 #define BUFFER_SIZE sizeof(DataPacket)
 
 void process_packet(DataPacket *data_packet, struct sockaddr_in *client_addr, socklen_t client_addr_len, int server_socket, int *expected_segment) {
-    if (data_packet->start_id != START_OF_PACKET_ID || data_packet->end_id != END_OF_PACKET_ID) {
+    if (data_packet->start_id != START_OF_PACKET_ID) {
         printf("Received corrupt packet! Ignoring...\n");
         return;
     }
